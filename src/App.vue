@@ -14,6 +14,8 @@ const router = useRouter()
 const userStore = useUserStore()
 const { user } = storeToRefs(userStore)
 
+// Check if user is authenticated on app load
+// If not, send them to login page
 onMounted(async () => {
   try {
     await userStore.fetchUser()

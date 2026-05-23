@@ -1,6 +1,6 @@
-# sueDO - A To-Do List Application
+# sueDO
 
-sueDO is a simple and intuitive to-do list application built with Vue.js. It allows users to create an account, manage their tasks, and keep track of what needs to be done. All data is securely stored in the cloud using Supabase.
+A simple to-do list app where you can create an account and manage your tasks. All your tasks are saved in the cloud using Supabase.
 
 ## Features
 
