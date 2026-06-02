@@ -1,31 +1,34 @@
 <template>
-  <section>
-    <router-view class="app-main" />
-  </section>
+  <v-app>
+    <router-view v-if="!userStore.loading" />
+    <v-main v-else class="d-flex justify-center align-center">
+      <v-progress-circular indeterminate color="primary" />
+    </v-main>
+  </v-app>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
-import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useUserStore } from './store/user.js'
 
 const router = useRouter()
 const userStore = useUserStore()
-const { user } = storeToRefs(userStore)
 
-// Check if user is authenticated on app load
-// If not, send them to login page
+// Check if user is logged in when app loads
+// If not, keep login/signup open or send them to the correct page
 onMounted(async () => {
-  try {
-    await userStore.fetchUser()
-    if (!user.value) {
-      router.push({ path: '/auth' });
-    } else {
-      router.push({ path: '/' });
+  await userStore.fetchUser()
+
+  const current = router.currentRoute.value.path
+  const isGuestRoute = ['/login', '/signup'].includes(current)
+
+  if (!userStore.user) {
+    if (!isGuestRoute) {
+      router.push('/login')
     }
-  } catch (e) {
-    console.error(e)
+  } else if (current !== '/') {
+    router.push('/')
   }
 })
 </script>

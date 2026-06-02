@@ -1,21 +1,20 @@
 # sueDO
 
-A simple to-do list app where you can create an account and manage your tasks. All your tasks are saved in the cloud using Supabase.
+A simple to-do list app where you can create an account, sign in, and manage tasks in a beginner-friendly Vue interface.
 
 ## Features
 
-- **User Authentication**: Sign up, sign in, and sign out functionality with email verification
+- **User Authentication**: Sign up, sign in, and sign out using Supabase Auth
 - **Task Management**: Create, edit, delete, and mark tasks as complete/incomplete
-- **Persistent Storage**: All tasks and user data are stored in Supabase
-- **Real-time Updates**: Tasks update instantly when changes are made
-- **Responsive Design**: Clean and user-friendly interface that works on different screen sizes
+- **Protected Pages**: Dashboard only opens when logged in, and logout returns the user to the login page
+- **Responsive UI**: Built with Vuetify components for a clean layout
 
 ## Tech Stack
 
 - **Frontend**: Vue.js 3, Vite
-- **State Management**: Pinia (with Pinia Persist for persistent login)
+- **State Management**: Pinia for simple user state
 - **Routing**: Vue Router
-- **Database**: Supabase
+- **Authentication**: Supabase Auth
 - **Build Tool**: Vite
 - **Styling**: CSS
 
@@ -42,9 +41,9 @@ A simple to-do list app where you can create an account and manage your tasks. A
    ```
 
 3. Set up environment variables:
-   - Create a `.env` file in the root directory
+   - Copy `.env.example` to `.env`
    - Add your Supabase credentials:
-     ```
+     ```bash
      VITE_SUPABASE_URL=your_supabase_url
      VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
      ```
@@ -54,8 +53,14 @@ A simple to-do list app where you can create an account and manage your tasks. A
 ```bash
 npm run dev
 # or
-yarn dev
+# yarn dev
 ```
+
+### App Pages
+
+- `http://localhost:5173/login` — Login page
+- `http://localhost:5173/signup` — Signup page
+- `http://localhost:5173/` — Protected dashboard after login
 
 The app will be available at `http://localhost:5173`
 
@@ -88,7 +93,7 @@ src/
 3. Users can add new tasks by entering the task title and clicking submit
 4. Tasks can be edited by clicking the edit button and updating the content
 5. Tasks can be marked as complete/incomplete or deleted as needed
-6. The app stores all changes in Supabase in real-time
+6. Task edits and completion state are managed locally in the dashboard
 
 ## Credits
 
