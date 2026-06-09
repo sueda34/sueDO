@@ -95,6 +95,37 @@ src/
 5. Tasks can be marked as complete/incomplete or deleted as needed
 6. Task edits and completion state are managed locally in the dashboard
 
+## API Overview
+
+Eine Übersicht der REST-APIs, die für die Entwicklung dieser Todo-Listen-App relevant sind:
+
+- Aufgabe hinzufügen (Add Task API)
+- Aufgabe bearbeiten (Edit Task API)
+- Aufgabe löschen (Delete Task API)
+- Aufgabe als erledigt markieren (Mark as Done API)
+- Alle Aufgaben anzeigen (Get All Tasks API)
+- Einzelne Aufgabe anzeigen (Get Task by ID API)
+
+### Typische REST-Endpunkte
+
+- `POST /tasks` – Aufgabe hinzufügen
+- `GET /tasks` – Alle Aufgaben abrufen
+- `GET /tasks/{id}` – Einzelne Aufgabe abrufen
+- `PUT /tasks/{id}` – Aufgabe bearbeiten
+- `PATCH /tasks/{id}/complete` – Als erledigt markieren
+- `DELETE /tasks/{id}` – Aufgabe löschen
+
+### Beschreibung der Endpunkte
+
+- `POST /tasks`: Legt eine neue Aufgabe an. Die Anfrage kann `title`, `description`, `due_date` und den Status `completed` enthalten.
+- `GET /tasks`: Liefert alle Aufgaben für die Übersichtsseite.
+- `GET /tasks/{id}`: Gibt die Details einer einzelnen Aufgabe anhand der ID zurück.
+- `PUT /tasks/{id}`: Aktualisiert eine bestehende Aufgabe, z. B. Titel oder Beschreibung.
+- `PATCH /tasks/{id}/complete`: Setzt nur den Erledigt-Status der Aufgabe.
+- `DELETE /tasks/{id}`: Entfernt die Aufgabe mit der angegebenen ID.
+
+> Hinweis: Die aktuelle App verwaltet Aufgaben lokal in `src/pages/Dashboard.vue`. Diese Endpunkte beschreiben die REST-API, die für eine vollständige Backend-Integration verwendet werden kann.
+
 ## Credits
 
 Built as a final project for web development coursework.
