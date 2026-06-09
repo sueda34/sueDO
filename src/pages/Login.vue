@@ -49,9 +49,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../supabase.js'
+import { useUserStore } from '../store/user.js'
 
 const router = useRouter()
+const userStore = useUserStore()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -60,6 +61,21 @@ const message = ref(null)
 // very small validation for email field
 function validateEmail(value) {
   return value && value.includes('@')
+}
+
+function getErrorMessage(error) {
+  if (!error) return 'Ein unerwarteter Fehler ist aufgetreten.'
+  const message = error.message?.toLowerCase() || ''
+
+  if (message.includes('email not confirmed') || message.includes('email not verified')) {
+    return 'E-Mail nicht bestätigt. Bitte überprüfe dein Postfach und bestätige den Link.'
+  }
+
+  if (message.includes('invalid login credentials') || message.includes('invalid login')) {
+    return 'Ungültige Login-Daten. Bitte überprüfe deine E-Mail-Adresse und dein Passwort.'
+  }
+
+  return error.message || 'Ein unerwarteter Fehler ist aufgetreten.'
 }
 
 async function handleLogin() {
@@ -76,18 +92,14 @@ async function handleLogin() {
   loading.value = true
   message.value = null
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: email.value,
-    password: password.value
-  })
-
-  if (error) {
-    message.value = { type: 'error', text: error.message }
-  } else {
+  try {
+    await userStore.signIn(email.value, password.value)
     router.push('/')
+  } catch (error) {
+    message.value = { type: 'error', text: getErrorMessage(error) }
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
 
 function goSignup() {

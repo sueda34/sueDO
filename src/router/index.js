@@ -12,12 +12,12 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 });
 
 // Global navigation guard to protect routes
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, from) => {
   const userStore = useUserStore()
 
   // Ensure we have fetched the current user
@@ -31,14 +31,14 @@ router.beforeEach(async (to, from, next) => {
   const isAuth = !!userStore.user
 
   if (to.meta.requiresAuth && !isAuth) {
-    return next({ path: '/login' })
+    return { path: '/login' }
   }
 
   if (to.meta.guestOnly && isAuth) {
-    return next({ path: '/' })
+    return { path: '/' }
   }
 
-  return next()
+  return true
 })
 
 export default router;

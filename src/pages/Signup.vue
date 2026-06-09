@@ -60,9 +60,10 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../supabase.js'
+import { useUserStore } from '../store/user.js'
 
 const router = useRouter()
+const userStore = useUserStore()
 const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
@@ -109,21 +110,8 @@ async function handleSignup() {
   loading.value = true
   message.value = null
 
-  const { error } = await supabase.auth.signUp(
-    {
-      email: email.value,
-      password: password.value
-    },
-    {
-      options: {
-        emailRedirectTo: `${window.location.origin}/`
-      }
-    }
-  )
-
-  if (error) {
-    message.value = { type: 'error', text: error.message }
-  } else {
+  try {
+    await userStore.signUp(email.value, password.value)
     message.value = {
       type: 'success',
       text: 'Please check your email and click the confirmation link.'
@@ -131,9 +119,11 @@ async function handleSignup() {
     email.value = ''
     password.value = ''
     confirmPassword.value = ''
+  } catch (error) {
+    message.value = { type: 'error', text: error.message }
+  } finally {
+    loading.value = false
   }
-
-  loading.value = false
 }
 
 function goLogin() {

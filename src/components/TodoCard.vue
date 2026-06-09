@@ -1,26 +1,26 @@
 <template>
-  <v-card :elevation="2" class="pa-4 mb-3" :class="taskClass">
-    <v-row align="center" justify="space-between" no-gutters>
-      <v-col cols="12" md="8">
-        <v-checkbox
-          :model-value="task.completed"
-          @update:model-value="handleToggle"
-          :label="task.title"
-          class="task-checkbox"
-          hide-details
+  <div class="task-item" :class="taskClass">
+    <div class="task-content">
+      <div class="task-checkbox-wrapper">
+        <input 
+          type="checkbox" 
+          :id="checkboxId"
+          :checked="task.completed"
+          @change="handleToggle"
+          class="task-checkbox-input"
         />
-      </v-col>
-
-      <v-col cols="12" md="4" class="d-flex justify-end gap-2 mt-4 mt-md-0">
-        <v-btn icon color="primary" @click="$emit('edit-task', task)">
-          <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn icon color="error" @click="$emit('delete-task', task)">
-          <v-icon>mdi-delete</v-icon>
-        </v-btn>
-      </v-col>
-    </v-row>
-  </v-card>
+        <label class="task-label" :for="checkboxId">{{ task.title }}</label>
+      </div>
+    </div>
+    <div class="task-actions">
+      <v-btn size="small" icon color="primary" @click="$emit('edit-task', task)">
+        <v-icon size="small">mdi-pencil</v-icon>
+      </v-btn>
+      <v-btn size="small" icon color="error" @click="$emit('delete-task', task)">
+        <v-icon size="small">mdi-delete</v-icon>
+      </v-btn>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -35,26 +35,78 @@ const props = defineProps({
 
 const emit = defineEmits(['toggle-complete', 'edit-task', 'delete-task'])
 
-// Handle when checkbox is clicked
-function handleToggle(value) {
-  emit('toggle-complete', { ...props.task, completed: value })
+const checkboxId = computed(() => `task-checkbox-${props.task.id}`)
+
+function handleToggle() {
+  console.log('TodoCard: handleToggle called for task', props.task.title)
+  emit('toggle-complete', props.task)
 }
 
-// Add strikethrough style to completed tasks
 const taskClass = computed(() => ({
   'task-completed': props.task.completed
 }))
 </script>
 
 <style scoped>
-.task-completed {
-  opacity: 0.78;
+.task-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  background: white;
 }
-.task-completed .v-label {
+
+.task-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.task-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.task-checkbox-input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  margin: 0;
+  accent-color: #1976d2;
+}
+
+.task-label {
+  cursor: pointer;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.task-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+.task-completed {
+  opacity: 0.6;
+}
+
+.task-completed .task-label {
   text-decoration: line-through;
   color: rgba(0, 0, 0, 0.45);
 }
-.task-checkbox .v-label {
-  text-decoration: inherit;
+
+.task-completed .task-checkbox-input {
+  accent-color: #4caf50;
 }
 </style>

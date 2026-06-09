@@ -16,7 +16,45 @@ const vuetify = createVuetify({
 })
 
 const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+
+pinia.use(({ store }) => {
+  const persistOptions = store.$options?.persist
+  if (!persistOptions) return
+
+  const strategies = Array.isArray(persistOptions.strategies)
+    ? persistOptions.strategies
+    : [persistOptions]
+
+  strategies.forEach((strategy) => {
+    const key = strategy.key || store.$id
+    const storage = strategy.storage || localStorage
+    const paths = strategy.paths || null
+
+    const storedState = storage.getItem(key)
+    if (storedState) {
+      try {
+        const parsed = JSON.parse(storedState)
+        store.$patch(parsed)
+      } catch (e) {
+        console.warn(`Failed to restore persisted store ${store.$id}:`, e)
+      }
+    }
+
+    store.$subscribe((mutation, state) => {
+      const dataToPersist = paths
+        ? paths.reduce((acc, path) => {
+            if (path in state) acc[path] = state[path]
+            return acc
+          }, {})
+        : state
+
+      storage.setItem(key, JSON.stringify(dataToPersist))
+    }, { detached: true })
+  })
+})
+
+app.use(pinia)
 app.use(router)
 app.use(vuetify)
 // Redirect user to home after successful auth (e.g., email confirmation)

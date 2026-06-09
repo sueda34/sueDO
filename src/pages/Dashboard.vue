@@ -2,75 +2,94 @@
   <v-main class="pa-6">
     <v-container fluid class="d-flex justify-center">
       <v-card max-width="920" class="mx-auto pa-6 elevation-4">
-        <v-row class="mb-4" align="center" justify="space-between">
-          <v-col cols="12" class="d-flex justify-between align-center">
-            <div>
-              <h1 class="display-1 todo-title">TODO LIST</h1>
-              <div class="subtitle">Add tasks, edit them, and mark complete.</div>
-            </div>
-            <v-btn color="error" variant="tonal" @click="handleSignOut">
-              Sign Out
-            </v-btn>
-          </v-col>
-        </v-row>
+        <!-- Header with Logo and Sign Out -->
+        <div class="dashboard-header mb-6">
+          <div>
+            <h1 class="display-1 todo-title">TODO LIST</h1>
+            <div class="subtitle">Add tasks, edit them, and mark complete.</div>
+          </div>
+          <v-btn color="error" variant="tonal" @click="handleSignOut" class="sign-out-btn">
+            Sign Out
+          </v-btn>
+        </div>
 
-        <v-row class="mb-4" align="center" justify="space-between">
-          <v-col cols="12" md="4">
-            <v-text-field
-              v-model="newTaskTitle"
-              label="New task title"
-              outlined
-              dense
-              clearable
-              placeholder="Type a new task here"
+        <!-- Input Section -->
+        <div class="mb-6">
+          <v-text-field
+            v-model="newTaskTitle"
+            label="New task title"
+            outlined
+            dense
+            clearable
+            placeholder="Type a new task here"
+          />
+        </div>
+
+        <!-- Actions Section: Add Task, Mark All Done, Filter -->
+        <div class="actions-container mb-6">
+          <v-btn 
+            color="primary" 
+            @click="addTask" 
+            :disabled="!newTaskTitle || taskStore.loading"
+            class="add-task-btn"
+          >
+            <v-icon left>mdi-plus</v-icon>
+            Add Task
+          </v-btn>
+
+          <v-btn
+            size="small"
+            color="success"
+            variant="tonal"
+            @click="markAllComplete"
+            :disabled="filteredTasks.length === 0 || taskStore.loading"
+            class="mark-all-btn"
+          >
+            Mark All Done
+          </v-btn>
+
+          <v-select
+            v-model="filter"
+            :items="filters"
+            label="Filter tasks"
+            outlined
+            dense
+            class="todo-filter-select"
+            style="max-width: 150px;"
+          />
+        </div>
+
+        <!-- Tasks Loading State -->
+        <div v-if="taskStore.loading" class="text-center mb-4">
+          <v-progress-circular indeterminate color="primary" size="48" />
+        </div>
+
+        <!-- Error Alert -->
+        <div v-else-if="taskStore.error" class="mb-4">
+          <v-alert type="error">
+            {{ taskStore.error.message || 'Unable to load tasks. Please try again.' }}
+          </v-alert>
+        </div>
+
+        <!-- Tasks List -->
+        <div v-else>
+          <div v-if="filteredTasks.length === 0" class="mb-4">
+            <v-alert type="info" border="start" colored-border>
+              No tasks match the current filter. Add a new task or change the filter.
+            </v-alert>
+          </div>
+
+          <div v-else class="tasks-list">
+            <TodoCard
+              v-for="task in filteredTasks"
+              :key="task.id"
+              :task="task"
+              @toggle-complete="toggleComplete"
+              @edit-task="startEdit"
+              @delete-task="deleteTask"
             />
-          </v-col>
-
-          <v-col cols="12" md="3" class="d-flex justify-center">
-            <v-btn color="primary" class="ma-0" @click="addTask" :disabled="!newTaskTitle">
-              <v-icon left>mdi-plus</v-icon>
-              Add Task
-            </v-btn>
-          </v-col>
-
-          <v-col cols="12" md="5" class="d-flex justify-end">
-            <v-select
-              v-model="filter"
-              :items="filters"
-              label="Filter tasks"
-              outlined
-              dense
-              class="todo-filter-select"
-            />
-          </v-col>
-        </v-row>
-
-        <v-row>
-          <v-col cols="12">
-            <v-list two-line>
-              <template v-if="filteredTasks.length === 0">
-                <v-list-item>
-                  <v-list-item-content>
-                    <v-alert type="info" border="start" colored-border>
-                      No tasks match the current filter. Add a new task or change the filter.
-                    </v-alert>
-                  </v-list-item-content>
-                </v-list-item>
-              </template>
-
-              <template v-else>
-                <v-list-item v-for="task in filteredTasks" :key="task.id">
-                  <TodoCard
-                    :task="task"
-                    @toggle-complete="toggleComplete"
-                    @edit-task="startEdit"
-                    @delete-task="deleteTask"
-                  />
-                </v-list-item>
-              </template>
-            </v-list>
-          </v-col>
-        </v-row>
+          </div>
+        </div>
       </v-card>
     </v-container>
 
@@ -96,56 +115,62 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TodoCard from '../components/TodoCard.vue'
 import { useUserStore } from '../store/user.js'
+import { useTaskStore } from '../store/task.js'
 
 const router = useRouter()
 const userStore = useUserStore()
+const taskStore = useTaskStore()
 
 const filters = ['All', 'Active', 'Completed']
-// Sample tasks to start with
-const tasks = ref([
-  { id: 1, title: 'Buy groceries', completed: false },
-  { id: 2, title: 'Finish homework', completed: true },
-  { id: 3, title: 'Plan study schedule', completed: false }
-])
 const newTaskTitle = ref('')
 const filter = ref('All')
 const editDialog = ref(false)
 const editTaskId = ref(null)
 const editTitle = ref('')
-const nextTaskId = ref(4)
 
-// Filter tasks based on selected filter
 const filteredTasks = computed(() => {
+  const taskList = taskStore.tasks || []
   if (filter.value === 'Active') {
-    return tasks.value.filter((task) => !task.completed)
+    return taskList.filter((task) => !task.completed)
   }
   if (filter.value === 'Completed') {
-    return tasks.value.filter((task) => task.completed)
+    return taskList.filter((task) => task.completed)
   }
-  return tasks.value
+  return taskList
 })
 
-// Add a new task to the list
-function addTask() {
-  if (!newTaskTitle.value.trim()) return
-  tasks.value.unshift({
-    id: nextTaskId.value++,
-    title: newTaskTitle.value.trim(),
-    completed: false
-  })
+async function loadTasks() {
+  if (!userStore.user) {
+    await userStore.fetchUser()
+  }
+
+  if (!userStore.user) {
+    return
+  }
+
+  await taskStore.fetchTasks()
+}
+
+onMounted(() => {
+  loadTasks()
+})
+
+async function addTask() {
+  const title = newTaskTitle.value.trim()
+  if (!title) return
+
+  await taskStore.createTask(title)
   newTaskTitle.value = ''
 }
 
-// Toggle task completion status
-function toggleComplete(task) {
-  const item = tasks.value.find((entry) => entry.id === task.id)
-  if (item) {
-    item.completed = !item.completed
-  }
+async function toggleComplete(task) {
+  console.log('Dashboard: toggleComplete called with', task)
+  await taskStore.toggleComplete(task)
+  console.log('Dashboard: toggleComplete finished, tasks are now:', taskStore.tasks)
 }
 
 function startEdit(task) {
@@ -154,29 +179,31 @@ function startEdit(task) {
   editDialog.value = true
 }
 
-function saveEdit() {
-  // Find the task and update it
-  const item = tasks.value.find((entry) => entry.id === editTaskId.value)
-  if (item && editTitle.value.trim()) {
-    item.title = editTitle.value.trim()
-  }
+async function saveEdit() {
+  if (!editTitle.value.trim()) return
+
+  await taskStore.updateTask(editTaskId.value, { title: editTitle.value.trim() })
   cancelEdit()
 }
 
 function cancelEdit() {
-  // Close the dialog and reset the form
   editDialog.value = false
   editTaskId.value = null
   editTitle.value = ''
 }
 
-function deleteTask(task) {
-  // Remove the task from the list
-  tasks.value = tasks.value.filter((entry) => entry.id !== task.id)
+async function deleteTask(task) {
+  await taskStore.deleteTask(task.id)
+}
+
+async function markAllComplete() {
+  const incompleteTasks = filteredTasks.value.filter(t => !t.completed)
+  for (const task of incompleteTasks) {
+    await taskStore.toggleComplete(task)
+  }
 }
 
 async function handleSignOut() {
-  // Sign out the user and go back to the login page
   await userStore.signOut()
   router.push('/login')
 }
@@ -186,18 +213,58 @@ async function handleSignOut() {
 .v-card {
   min-height: 340px;
 }
+
 .todo-title {
   margin: 0;
   letter-spacing: 0.05em;
+  color: #b8860b; /* dunkles Gold für bessere Lesbarkeit */
 }
+
 .subtitle {
   color: rgba(0, 0, 0, 0.65);
   margin-top: 4px;
   font-size: 0.95rem;
 }
+
+/* Header Layout */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.sign-out-btn {
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+/* Actions Container */
+.actions-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.add-task-btn {
+  min-width: 140px;
+}
+
+.mark-all-btn {
+  white-space: nowrap;
+}
+
 .todo-filter-select {
-  min-width: 180px;
-  max-width: 280px;
-  width: 100%;
+  min-width: 150px;
+  max-width: 180px;
+}
+
+/* Tasks List */
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 </style>
